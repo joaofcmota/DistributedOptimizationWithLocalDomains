@@ -1,0 +1,382 @@
+\documentclass[letter,10pt]{article}
+
+\usepackage[english]{babel}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{color}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{colortbl}                   % Para tabelas com sombreados
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{epsfig}
+\usepackage{pstricks}
+\usepackage{pst-node}
+\usepackage{pst-grad}
+\usepackage{ifthen}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{setspace}
+\usepackage[framed]{ntheorem}
+\usepackage{framed}
+
+
+\setlength{\topmargin}{-10mm} \setlength{\textheight}{225mm}
+\setlength{\headheight}{14pt} \setlength{\headsep}{10mm}
+\setlength{\textwidth}{150mm} \setlength{\footskip}{13mm}
+\setlength{\oddsidemargin}{5mm} \setlength{\evensidemargin}{5mm}
+
+
+\theoremstyle{definition}
+\newtheorem{Algorithm}{Algorithm}
+\newtheorem*{Definition}{Definition}
+\shadecolor{black!10!white}
+\theorembodyfont{\rm\normalfont}
+\theoremindent0cm
+\newshadedtheorem{thm}{Theorem}
+
+\newshadedtheorem{lem}{Lemma}
+\newshadedtheorem{proposition}{Proposition}
+\newtheorem{Assumption}{Assumption}
+\newtheorem{Remark}{Remark}
+
+\theoremstyle{nonumberplain}
+\theoremindent0cm
+\newtheorem{proof}{Proof}
+
+
+\newcommand{\mypar}[1]{\bigskip\noindent {\bf #1.}}
+
+\newcommand\mynote[1]{\mbox{}\marginpar{\footnotesize\raggedright\hspace{0pt}\color{blue}\emph{#1}}}
+
+\newcommand{\answer}[1]{\medskip\noindent \textcolor[rgb]{0.00,0.00,1.00}{#1}\bigskip}
+
+\newcommand{\qed}{\hfill $\Box$}
+
+\definecolor{red}{RGB}{153,0,0}
+
+
+\title{Distributed MPC: Data Generation and Manipulations}
+
+\author{João Mota}
+
+
+\begin{document}
+
+\maketitle
+
+	This document describes the model we used for MPC, how the data was generated, and how we solved the problem with D-ADMMp.
+
+	\begin{figure}[t]
+  \centering
+  \psscalebox{1.0}{
+		\begin{pspicture}(7,4.5)
+			%\psframe*[linecolor=black!7!white,fillstyle=crosshatch](-0.30,-0.30)(7.30,4.30)
+				\def\nodesimp{
+            \pscircle*[linecolor=black!65!white](0,0){0.3}
+        }
+        \rput(1,3.7){\rnode{N1}{\nodesimp}}
+        \rput(0.3,2){\rnode{N2}{\nodesimp}}
+        \rput(0.3,0.3){\rnode{N3}{\nodesimp}}
+        \rput(2.5,1.7){\rnode{N4}{\nodesimp}}
+        \rput(5,2){\rnode{N5}{\nodesimp}}
+        \rput(3.8,3){\rnode{N6}{\nodesimp}}
+        \rput(6.7,3.2){\rnode{N7}{\nodesimp}}
+        \rput(3.5,0.5){\rnode{N8}{\nodesimp}}
+        \rput(6.3,0.9){\rnode{N9}{\nodesimp}}
+        \rput(4.1,4.1){\rnode{N10}{\nodesimp}}
+
+        \rput(1,3.7){\scriptsize \textcolor{black!3!white}{$1$}}      \rput[rb](0.68765248,3.94987802){$f_1$}
+        \rput(0.3,2){\scriptsize \textcolor{black!3!white}{$2$}}      \rput[rb](0.017157,2.282843){$f_2$}
+        \rput(0.3,0.3){\scriptsize \textcolor{black!3!white}{$3$}}    \rput[rt](0.017157,0.017157){$f_3$}
+        \rput(2.5,1.7){\scriptsize \textcolor{black!3!white}{$4$}}    \rput[t](2.5,1.3){$f_4$}
+        \rput(5,2){\scriptsize \textcolor{black!3!white}{$5$}}        \rput[t](5.0,1.6){$f_5$}
+        \rput(3.8,3){\scriptsize \textcolor{black!3!white}{$6$}}      \rput[rb](3.51715729,3.28284271){$f_6$}
+        \rput(6.7,3.2){\scriptsize \textcolor{black!3!white}{$7$}}    \rput[lb](6.982843,3.482843){$f_7$}
+        \rput(3.5,0.5){\scriptsize \textcolor{black!3!white}{$8$}}    \rput[tr](3.21715729,0.21715729){$f_8$}
+        \rput(6.3,0.9){\scriptsize \textcolor{black!3!white}{$9$}}    \rput[lt](6.58284271,0.61715729){$f_9$}
+        \rput(4.1,4.1){\scriptsize \textcolor{black!3!white}{$10$}}   \rput[lb](4.41234752,4.34987802){$f_{10}$}
+
+        \ncline[nodesep=0.37cm]{-}{N1}{N2}
+        \ncline[nodesep=0.37cm]{-}{N1}{N4}
+        \ncline[nodesep=0.37cm]{-}{N2}{N3}
+        \ncline[nodesep=0.37cm]{-}{N2}{N4}
+        \ncline[nodesep=0.37cm]{-}{N4}{N5}
+        \ncline[nodesep=0.37cm]{-}{N4}{N6}
+        \ncline[nodesep=0.37cm]{-}{N5}{N6}
+        \ncline[nodesep=0.37cm]{-}{N5}{N7}
+        \ncline[nodesep=0.37cm]{-}{N3}{N4}
+        \ncline[nodesep=0.37cm]{-}{N1}{N6}
+        \ncline[nodesep=0.37cm]{-}{N6}{N7}
+        \ncline[nodesep=0.37cm]{-}{N8}{N4}
+        \ncline[nodesep=0.37cm]{-}{N8}{N5}
+        \ncline[nodesep=0.37cm]{-}{N8}{N9}
+        \ncline[nodesep=0.37cm]{-}{N8}{N3}
+        \ncline[nodesep=0.37cm]{-}{N8}{N6}
+        \ncline[nodesep=0.37cm]{-}{N9}{N5}
+        \ncline[nodesep=0.37cm]{-}{N9}{N7}
+        \ncline[nodesep=0.37cm]{-}{N10}{N6}
+        \ncline[nodesep=0.37cm]{-}{N10}{N7}
+        \ncline[nodesep=0.37cm]{-}{N10}{N1}
+        \ncline[nodesep=0.37cm]{-}{N10}{N5}
+
+        %\psgrid
+   \end{pspicture}
+  }
+  \bigskip
+  \caption{Example of a communication network. Node~$p$ only knows~$f_p$, but cooperates with its neighbors in order to solve the global problem~\eqref{Eq:PartialProb}.}
+  \label{Fig:IntroNetwork}
+  \end{figure}
+
+
+	\section{Introduction}
+
+	\textit{Model Predictive Control} (MPC) is a popular and widely used control strategy for discrete-time systems. To introduce it, consider a system modeled by the state-space equation~$x[t+1] = f^t(x[t],u[t])$, where~$x[t]$ and~$u[t]$ are, respectively, the state and control at time~$t$. We assume the state is measured, possibly with inaccuracies, at each time instant. The function~$f^t$ models the system at time~$t$ and, many times, it is inaccurate and/or contains random factors (e.g., modeling noise). The goal of MPC is to drive the state from an initial value~$x[0]$ to other predetermined value at time horizon~$T$. Since there may exist many ways to achieve this goal, one might wish to do it while minimizing some function of the state and input, $g^t(x[t], u[t])$. Such function can model, for example, the energy consumed at time~$t$. All this can be formalized with the optimization problem
+  \begin{equation}\label{Eq:MPC}
+    \begin{array}{cl}
+      \underset{\{x[t]\}_{t=0}^T, \{u[t]\}_{t=0}^{T-1}}{\text{minimize}} & h(x[T]) + \sum_{t=0}^{T-1} g^t(x[t], u[t]) \\
+      \text{subject to} & x[t+1] = f^t(x[t], u[t])\,,\quad t=0,1,\ldots,T-1 \\
+                        & x[0] = x^0\,,\\
+    \end{array}
+  \end{equation}
+  where the function~$h(\cdot)$ expresses the goal of achieving the desired state at time~$T$, and~$x^0$ is the measured state at time~$t=0$. In words, \eqref{Eq:MPC} finds a sequence of inputs~$u[0]$, $u[1]$, \ldots, $u[T-1]$ and the corresponding sequence of (induced) states~$x[0]$, $x[1]$, \ldots, $x[T]$ that minimize the objective of~\eqref{Eq:MPC} while satisfying the system dynamics. The objective of~\eqref{Eq:MPC} is a tradeoff between minimizing~$g_t(x[t],u[t])$ at each instant and achieving the goal (final state). The MPC strategy consists of solving~\eqref{Eq:MPC}, applying~$u[0]$ to the system, measuring~$x[1]$, setting~$t=0$, and repeating the process over again. That is, at each time instant, we compute all the future inputs and all the future states, although we will only use~$u[0]$. The more accurate the system model is, the more similar the predicted states and the measured states will be. MPC is thus a conservative way of dealing with model inaccuracies and noise, and it consists of solving a sequence of problems with the format of~\eqref{Eq:MPC}. Next we present our assumptions on problem~\eqref{Eq:MPC} and subsequent simplifications.
+
+  \section{Our model}
+
+  Our goal is to solve~\eqref{Eq:MPC} with D-ADMMp, an algorithm that solves problems with the format
+  \begin{equation}\label{Eq:PartialProb}
+		\begin{array}{ll}
+			\underset{z \in \mathbb{R}^K}{\text{minimize}} & f_1(z_{S_1}) + f_2(z_{S_2}) + \cdots + f_P(z_{S_P})\,,
+    \end{array}
+	\end{equation}
+	where $S_p \subseteq \{1,2,\ldots,K\}$ is the set of indices of the variable $z \in \mathbb{R}^K$ node~$p$ depends on. Problem~\eqref{Eq:PartialProb} is associated to a network like the one in Figure~\ref{Fig:IntroNetwork}. There are~$P$ nodes and~$E$ edges, and node~$p$, besides knowing only the function~$f_p$, can only communicate with its neighbors.
+
+	\mypar{First level of decomposition}
+	Problem~\eqref{Eq:MPC} is too generic to be recast as~\eqref{Eq:PartialProb}. The following decomposition, for example, enables recasting~\eqref{Eq:MPC} as~\eqref{Eq:PartialProb}:
+  \begin{align*}
+    x[t] &= \Bigl(x_1[t],x_2[t],\ldots,x_P[t]\Bigr)\,,\qquad t=0,1,\ldots,T \\
+    u[t] &= \Bigl(u_1[t],u_2[t],\ldots,u_P[t]\Bigr)\,,\qquad t=0,1,\ldots,T-1 \\
+  	x_p[t+1] &= f_p^t\Bigl( \{x_j[t], u_j[t]\}_{j \in \Omega_p}\Bigr)\,,\qquad t=0,1,\ldots,T-1 \\
+  	h(x[T]) &= \sum_{p=1}^P h_p\Bigl(\{x_j[T]\}_{j \in \Omega_p}\Bigr) \\
+  	g^t(x[t],u[t]) &= \sum_{p=1}^P g_p^t\Bigl(\{x_j[t],u_j[t]\}_{j \in \Omega_p}\Bigr)\,,\qquad t=0,1,\ldots,T-1\,,
+  \end{align*}
+	where~$x_p[t] \in \mathbb{R}^{n_p}$ and~$u_p[t] \in \mathbb{R}^{m_p}$ are, respectively, the state and input of the subsystem located at node~$p$, and~$\Omega_p \subseteq \{1,\ldots,P\}$ is the set of neighbors node~$p$ interacts with, either in terms of dynamics or objective. With this decomposition, problem~\eqref{Eq:MPC} can be written as
+	\begin{equation}\label{Eq:MPCDecomp1}
+		\begin{array}{cl}
+			\underset{\{x_p[t]\}_{t=0,p=1}^{T,P}, \{u_p[t]\}_{t=0,p=1}^{T-1,P}}{\text{minimize}} & \sum_{p=1}^P
+			   \biggl(
+					 h_p\Bigl(\{x_j[T]\}_{j \in \Omega_p}\Bigr) + \sum_{t=0}^{T-1} g_p^t\Bigl(\{x_j[t],u_j[t]\}_{j \in \Omega_p}\Bigr)
+				 \biggr)
+			\\
+			\text{subject to} & x_p[t+1] =  f_p^t\Bigl( \{x_j[t], u_j[t]\}_{j \in \Omega_p}\Bigr)\,,\qquad t=0,1,\ldots,T-1\,,\quad p=1,\ldots,P \\
+			& x_p[0] = x_p^0\,,\qquad p=1,\ldots,P\,.
+		\end{array}
+	\end{equation}
+
+  Problem~\eqref{Eq:MPCDecomp1} can be promptly solved with D-ADMMp, for any choice of functions that makes the overall problem convex, with the objective function closed and convex. In the next level of decomposition, we select specific functions and make further assumptions.
+
+  \mypar{Second level of decomposition}
+  We simplify the previous decomposition by making some assumptions commonly found in distributed settings, namely linear time-invariant subsystems and quadratic functions. Furthermore, we assume that there is coupling only through the dynamics, i.e., through the function~$f_p^t$. In particular we assume, for~$p=1,\ldots,P$,
+  \begin{align}
+  	x_p[t+1] &= A_{pp}x_p[t] + B_{pp}u_p[t] + \sum_{j \in \Omega_p'} B_{pj} u_j[t] \,,\qquad t=0,\ldots,T-1
+  	\label{Eq:MPCDecomp2_1}
+  	\\
+  	h_p(\{x_j[T]\}_{j \in \Omega_p}) &= x_p[T]^\top \bar{Q}_p^f\, x_p[T] \notag\\
+  	g_p^t(\{x_j[t],u_j[t]\}_{j \in \Omega_p}) &= x_p[t]^\top \bar{Q}_p\, x_p[t] + u_p[t]^\top \bar{R}_p\, u_p[t]\,, \qquad t=0,\ldots,T-1\,,
+  	\notag
+  \end{align}
+  where we decomposed~$\Omega_p$ into $\Omega_p = \{p\} \cup \Omega_p'$. With these assumptions, problem~\eqref{Eq:MPCDecomp1} becomes
+  \begin{equation}\label{Eq:MPCDecomp2}
+  	\begin{array}{cl}
+  		\underset{\begin{subarray}{c}x_1,\ldots,x_P\\u_1,\ldots,u_P\end{subarray}}{\text{minimize}} &
+  		\sum_{p=1}^P u_p^\top R_p u_p + x_p^\top Q_p x_p \\
+  		\text{subject to} & x_p = C_p \{u_j\}_{j \in \mathcal{S}_p} + D_p^0 \,,\qquad p = 1,\ldots,P\,,
+  	\end{array}
+  \end{equation}
+  where, for each~$p$,
+  \begin{align*}
+    x_p &= (x_p[0],x_p[1],\ldots,x_p[T-1],x_p[T])  \in \mathbb{R}^{T n_p}\\
+    u_p &= (u_p[0],u_p[1],\ldots,u_p[T-1])         \in \mathbb{R}^{T m_p} \\
+		R_p &= I_{T} \otimes \bar{R}_p  \\
+		Q_p &= \begin{bmatrix}
+		      	I_{T} \otimes \bar{Q}_p & 0\\
+		      	0 & \bar{Q}_p^f
+		      \end{bmatrix}\,,
+  \end{align*}
+  and~$I_{T}$ is the identity matrix in $\mathbb{R}^{T}$. To arrive at the constraint in~\eqref{Eq:MPCDecomp2}, we just iterated \eqref{Eq:MPCDecomp2_1}:
+  \begin{align*}
+  	x_p[0] &= x_p^0
+  	\\
+  	  x_p[1] &= A_{pp} x_p[0] + \sum_{j \in \Omega_p} B_{pj} u_j[0]
+  	         \\
+  	  x_p[2] &= A_{pp} x_p[1] + \sum_{j \in \Omega_p} B_{pj} u_j[1]
+  	         \\
+  	         &= A_{pp}^2 x_p[0] + A_{pp} \sum_{j \in \Omega_p} B_{pj} u_j[0] + \sum_{j \in \Omega_p} B_{pj} u_j[1]
+		\\
+		  x_p[3] &= A_{pp} x_p[2] + \sum_{j \in \Omega_p} B_{pj} u_j[2]
+		         \\
+		         &= A_{pp}^3 x_p[0] + A_{pp}^2 \sum_{j \in \Omega_p} B_{pj} u_j[0] + A_{pp} \sum_{j \in \Omega_p} B_{pj} u_j[1] + \sum_{j \in \Omega_p} B_{pj} u_j[2]
+    \\
+		&\phantom{a}\vdots
+  \end{align*}
+	from which
+	$$
+		x_p = C_p \{u_j\}_{j \in \Omega_p} + D_p^0\,,
+	$$
+	where
+	\begin{equation}\label{Eq:MatricesCAndD}
+		C_p :=
+		\begin{bmatrix}
+			0                  & 0                 & 0                 & 0                 & \cdots & 0     \\
+      B_{p}              & 0                 & 0                 & 0                 & \cdots & 0     \\
+      A_{pp}B_{p}        & B_{p}             & 0                 & 0                 & \cdots & 0     \\
+      A_{pp}^2B_{p}      & A_{pp}B_{p}       & B_{p}             & 0                 & \cdots & 0     \\
+       \vdots            & \vdots            & \vdots            & \ddots            &        & \vdots\\
+      A_{pp}^{T-2}B_{p}  & A_{pp}^{T-3}B_{p} & A_{pp}^{T-4}B_{p} &                   & \ddots & 0     \\
+      A_{pp}^{T-1}B_{p}  & A_{pp}^{T-2}B_{p} & A_{pp}^{T-3}B_{p} & A_{pp}^{T-4}B_{p} & \cdots & B_{p} \\
+		\end{bmatrix}
+		\,,
+		\qquad
+		D_p^0
+		:=
+		\begin{bmatrix}
+      I           \\
+      A_{pp}      \\
+      A_{pp}^2     \\
+      A_{pp}^3     \\
+      \vdots      \\
+      A_{pp}^{T-1} \\
+      A_{pp}^{T}   \\
+    \end{bmatrix}
+    x_p^0
+    \,,
+	\end{equation}
+	and~$B_p := \bigl[B_{pj}\bigr]_{j \in \Omega_p}$, where the operation $\bigl[\cdot\bigr]$ denotes horizontal concatenation.
+
+	Problem~\eqref{Eq:MPCDecomp2} can clearly be simplified by eliminating~$x$. Namely, its objective becomes
+	\begin{align}
+		&
+		  \sum_{p=1}^P u_p^\top R_p u_p + \Bigl(C_p \{u_j\}_{j \in \Omega_p} + D_p^0\Bigr)^\top Q_p \Bigl(C_p \{u_j\}_{j \in \Omega_p} + D_p^0\Bigr)
+		\notag
+		\\
+		&=
+		  \sum_{p=1}^P u_p^\top R_p u_p + \{u_j\}_{j \in S_p}^\top C_p^\top Q_p C_p \{u_j\}_{j \in S_p} + 2 {D_p^0}^\top Q_p C_p \{u_j\}_{j \in S_p} + {D_p^0}^\top Q_p D_p^0
+		\notag
+		\\
+		&=
+		  \sum_{p=1}^P \{u_j\}_{j \in S_p}^\top E_p \{u_j\}_{j \in S_p} + 2 (C_p^\top Q_p D_p^0)^\top \{u_j\}_{j \in S_p} + {D_p^0}^\top Q_p D_p^0\,,
+		\label{Eq:DefE_p}
+	\end{align}
+	where~$E_p$ is a matrix obtained by summing~$R_p$ with $C_p^\top Q_p C_p$ in the correct entries; this depends on how we define the variable. Problem~\eqref{Eq:MPCDecomp2} becomes
+	\begin{equation}\label{Eq:MPCDecomp3}
+  	\underset{u_1,\ldots,u_P}{\text{minimize}} \,\,\, \sum_{p=1}^P \{u_j\}_{j \in S_p}^\top E_p \{u_j\}_{j \in S_p} + w_p^\top \{u_j\}_{j \in S_p}\,,
+  \end{equation}
+  where
+  \begin{equation}\label{Eq:Defw_p}
+  	w_p := 2 (C_p^\top Q_p D_p^0)\,.
+  \end{equation}
+  Problem~\eqref{Eq:MPCDecomp3} clearly has the format of~\eqref{Eq:PartialProb}.
+
+
+\section{Algorithm}
+
+	Algorithm~\ref{Alg:MPC} shows the application of D-ADMMp to solve~\eqref{Eq:MPCDecomp3}. The variable is
+	$$
+		u = \begin{bmatrix}
+		    	u_1 \\
+		    	u_2 \\
+		    	\vdots \\
+		    	u_P
+		    \end{bmatrix}
+				\in \mathbb{R}^{PTm_p}\,.
+	$$
+
+  At each iteration, node~$p$ has to solve
+  \begin{align*}
+		&
+		  \underset{\{u_j\}_{j \in S_p}}{\text{minimize}} \,\,\, \{u_j\}_{j \in S_p}^\top E_p \{u_j\}_{j \in S_p} + w_p^\top \{u_j\}_{j \in S_p} + v^\top \{u_j\}_{j \in S_p} + \{u_j\}_{j \in S_p}^\top \Phi \{u_j\}_{j \in S_p}
+		\\
+		\Longleftrightarrow \,\,\, &
+		  \underset{\{u_j\}_{j \in S_p}}{\text{minimize}} \,\,\, \{u_j\}_{j \in S_p}^\top (E_p + \Phi) \{u_j\}_{j \in S_p} + (w_p + v)^\top \{u_j\}_{j \in S_p}\,,
+  \end{align*}
+  where~$\Phi$ is a diagonal matrix; both $\Phi$ and~$v$ are provided by D-ADMMp. The solution to this problem can be computed in closed-form:
+  \begin{equation}\label{Eq:ClosedFormSoluProbp}
+  	\{u_j^{\star}\}_{j \in S_p} = -\frac{1}{2} (E_p + \Phi)^{-1}(w_p + v)\,.
+  \end{equation}
+
+	\begin{algorithm}
+    \caption{D-ADMMp for MPC}
+    %\small
+    \label{Alg:MPC}
+    \begin{algorithmic}[1]
+    \algrenewcommand\algorithmicrequire{\textbf{Input (for node \boldmath{$p$}):}}
+    \Require
+			\State Matrices~$\bar{R}_p \in \mathbb{R}^{m_p\times m_p}$, $\bar{Q}_p, \bar{Q}_p^f, A_{pp} \in \mathbb{R}^{n_p\times n_p}$, $B_{pp} \in \mathbb{R}^{n_p\times m_p}$; for the set of nodes~$j \in \Omega_p'$ that influences node~$p$, $B_{pj}$;
+			\State Time horizon~$T$;
+			\State Measurement of the state $x_p^0 \in \mathbb{R}^{n_p}$
+
+		\Statex
+
+    \algrenewcommand\algorithmicrequire{\textbf{Initialization (for node \boldmath{$p$}):}}
+    \Require
+			\State Form $R_p = I_{T} \otimes \bar{R}_p $ and $Q_p = \text{Diag}(I_{T} \otimes \bar{Q}_p, \bar{Q}_p^f)$, and also~$C_p$, $D_p^0$, as in~\eqref{Eq:MatricesCAndD};
+
+			\State Form~$E_p$ and in~\eqref{Eq:DefE_p} and~$w_p$ as in~\eqref{Eq:Defw_p};
+
+			\State Let~$S_p$ denote the set of indices of~$u$ node~$p$ depends on, and let~$u^{(p)}$ be the copy of the components of~$z$ held at node~$p$; let~$\mathcal{V}_l$ the set of nodes depending on the $l$th component of~$z$; also, let~$\mathcal{C}(p)$ denote the color of node~$p$;
+
+			\State Set $\gamma_{l}^{(p),1} = u_l^{(p),1} = 0$, for~$l \in S_p$, and $k=1$
+
+		\Statex
+
+		\algrenewcommand\algorithmicrequire{\textbf{Algorithm:}}
+		\Require
+
+    \Repeat
+    \For{$c =1,\ldots,C$}
+        \ForAll{$p \in \mathcal{C}_c$ [in parallel]}
+        \ForAll{$l \in S_p$}
+            $$
+                v_l^{(p),k} = \gamma_l^{(p),k}-
+                \rho \sum_{\begin{subarray}{c}
+                             j \in \Omega_{p}' \cap \mathcal{V}_l \\
+                             C(j) < c
+                           \end{subarray}
+                }u_l^{(j),k+1} - \rho \sum_{\begin{subarray}{c}
+                             j \in \Omega_{p}' \cap \mathcal{V}_l \\
+                             C(j) > c
+                           \end{subarray}
+                }u_l^{(j),k}
+            $$
+            %\vspace{-0.3cm}
+            \label{SubAlg:PartialVec}
+         \EndFor
+        \Statex
+        \State Solve the linear system~\eqref{Eq:ClosedFormSoluProbp}, $\{u_j^{(p),k+1}\}_{j \in S_p} = -\frac{1}{2} (E_p + \Phi)^{-1}(w_p + v^{(p),k})$
+
+        \State For each component~$l \in S_p$, send~$u_l^{(p),k+1}$ to $\Omega_p' \cap \mathcal{V}_l$
+        \label{SubAlg:PartialComm}
+    \EndFor
+    \EndFor
+
+    \ForAll{$p \in \mathcal{V}$ and $l \in S_p$ [in parallel]} \vspace{0.15cm}
+    \hfill
+
+        $
+            \gamma_l^{(p),k+1} = \gamma_l^{(p),k} + \rho \sum_{j \in \Omega_p' \cap \mathcal{V}_l} (u_l^{(p),k+1} -  u_l^{(j),k+1})
+        $\label{SubAlg:PartialDualVarUpdt}  \vspace{0.15cm}
+
+    \EndFor
+    \State $k \gets k+1$
+    \Until{some stopping criterion is met}
+    \end{algorithmic}
+  \end{algorithm}
+
+
+\pagebreak
+%\bibliographystyle{amsplain}
+%\bibliography{MPC}
+
+\end{document}

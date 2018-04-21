@@ -1,0 +1,13 @@
+--------------------------------------------------------------
+Statistics about the Data in: Data/Barab_NonStar_P_100_UNSTABLE.mat
+
+Path to Network: ../../../Networks/MPC/ProcessedNetwork/Barabasi_P_100.mat
+
+Parameters defined by the user: 
+  STABLE:    0
+  T:         5
+  n_p:       3
+  m_p:       1
+  Lipschitz: 930293.0597
+
+--------------------------------------------------------------

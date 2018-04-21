@@ -1,0 +1,13 @@
+--------------------------------------------------------------
+Statistics about the Data in: Data/Barab_P_2000_STABLE.mat
+
+Path to Network: ../../../Networks/MPC/ProcessedNetwork/Barabasi_P_2000.mat
+
+Parameters defined by the user: 
+  STABLE:    1
+  T:         5
+  n_p:       3
+  m_p:       1
+  Lipschitz: 9616.2477
+
+--------------------------------------------------------------

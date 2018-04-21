@@ -1,0 +1,13 @@
+--------------------------------------------------
+Network Statistics:
+
+
+
+Number of nodes:  4941
+Number of edges:  6594
+Diameter:         46
+Number of colors: 6
+Maximum degree:   19
+Minimum degree:   1
+Average degree:   2.66909532483
+--------------------------------------------------

@@ -1,0 +1,206 @@
+\documentclass[letter,10pt]{article}
+
+\usepackage[english]{babel}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{color}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{epsfig}
+\usepackage{pstricks}
+\usepackage{pst-node}
+\usepackage{pst-grad}
+\usepackage{ifthen}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{setspace}
+\usepackage[framed]{ntheorem}
+\usepackage{framed}
+
+
+\setlength{\topmargin}{-10mm} \setlength{\textheight}{225mm}
+\setlength{\headheight}{14pt} \setlength{\headsep}{10mm}
+\setlength{\textwidth}{150mm} \setlength{\footskip}{13mm}
+\setlength{\oddsidemargin}{5mm} \setlength{\evensidemargin}{5mm}
+
+
+\theoremstyle{definition}
+\newtheorem{Algorithm}{Algorithm}
+\newtheorem*{Definition}{Definition}
+\shadecolor{black!10!white}
+\theorembodyfont{\rm\normalfont}
+\theoremindent0cm
+\newshadedtheorem{thm}{Theorem}
+
+\newshadedtheorem{lem}{Lemma}
+\newshadedtheorem{proposition}{Proposition}
+\newtheorem{Assumption}{Assumption}
+\newtheorem{Remark}{Remark}
+
+\theoremstyle{nonumberplain}
+\theoremindent0cm
+\newtheorem{proof}{Proof}
+
+\newcommand{\mypar}[1]{\bigskip\noindent {\bf #1.}}
+
+\newcommand\mynote[1]{\mbox{}\marginpar{\footnotesize\raggedright\hspace{0pt}\color{blue}\emph{#1}}}
+
+\newcommand{\answer}[1]{\medskip\noindent \textcolor[rgb]{0.00,0.00,1.00}{#1}\bigskip}
+
+\newcommand{\qed}{\hfill $\Box$}
+
+\definecolor{red}{RGB}{153,0,0}
+
+
+\begin{document}
+
+
+\section*{Description and Implementation of a 2-Block ADMM Algorithm for Problems with Star-Shaped Variables}
+
+	We describe the algorithm in section 7.2 of
+
+	\bigskip
+	\noindent
+	\cite{Boyd10-ADMM}
+	\quad
+	S. Boyd, N. Parikh, E. Chu, B. Peleato, and J. Eckstein ``Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers,'' Found. Trends Mach. Learning, Vol.3, No.4, 2010
+
+	\bigskip
+	\noindent
+	This algorithm solves
+	\begin{equation}\label{Eq:PartialProb}
+		\underset{x \in \mathbb{R}^n}{\text{minimize}} \,\,\, f_1(x_{S_1}) + f_2(x_{S_2}) + \cdots + f_P(x_{S_P})\,,
+	\end{equation}
+	where function~$f_p$ depends only on a subset~$S_p \subseteq \{1,\ldots,n\}$ of components of the variable~$x \in \mathbb{R}^n$. However, as is stated in section 10.1 of~\cite{Boyd10-ADMM}, the algorithm proposed there requires a global aggregation mechanism, i.e., a central node where each node can, in one operation, broadcast a message to all the other nodes in the network. This is not distributed in our sense. For us, distributed means that, besides no central node, each node can only communicate with its neighbors. In this document we describe how the algorithm proposed in section 7.2 of~\cite{Boyd10-ADMM} can be used to solve~\eqref{Eq:PartialProb} in a distributed scenario. However, its implementation in a distributed scenario is only efficient, i.e., without requiring consensus steps within subgraphs, in a special case of the variable~$x$ in~\eqref{Eq:PartialProb}: each component~$x_l$ induces a subgraph that is a star, for~$l=1,\ldots,n$. In other words, there is a connected network with~$P$ nodes, where the $p$th node knows only~$f_p$; in this network, the set of nodes that depends on~$x_l$ is a star.
+
+\mypar{Derivation}
+	Let~$\mathcal{G} = (\mathcal{V},\mathcal{E})$ be the communication network where we want to solve~\eqref{Eq:PartialProb} in a distributed way. Let~$\mathcal{V}_l$ be the subgraph induced by~$x_l$, i.e., the set of nodes in~$\mathcal{V}$ whose function~$f_p$ depends on~$x_l$ ($l \in S_p$). We assume~$\mathcal{V}_l$ is a star. Now, create a copy of~$x_l$ in all nodes in~$\mathcal{V}_l$ and denote the copy at the $p$th node with $x_l^{(p)}$. We rewrite~\eqref{Eq:PartialProb} as
+	\begin{equation}\label{Eq:Prob2}
+		\begin{array}{ll}
+			\underset{\bar{x},z}{\text{minimize}} & f_1(x_{S_1}^{(1)}) + f_2(x_{S_2}^{(2)}) + \cdots + f_P(x_{S_P}^{(P)}) \\
+			\text{subject to} & x_l^{(p)} = z_l\,,\quad p \in \mathcal{V}_l,\, \quad l = 1,\ldots,n\,,
+		\end{array}
+	\end{equation}
+	where~$x_{S_p}^{(p)} := \{x_l^{(p)}\}_{l \in S_p}$ is the set of all copies at node~$p$. The variable is~$(\bar{x},z)$, where~$\bar{x} = (\bar{x}_1,\ldots,\bar{x}_n)$, with~$\bar{x}_l := \{x_l^{(p)}\}_{p \in \mathcal{V}_l}$ denoting all the copies of the component~$x_l$, and $z \in \mathbb{R}^n$.
+
+	Next, we form the augmented Lagrangian of~\eqref{Eq:Prob2}
+	\begin{align}
+		  L_\rho(\bar{x},z;\lambda)
+		&=
+		  \sum_{p=1}^P f_p(x_{S_p}^{(p)}) + \sum_{l = 1}^n \sum_{p \in \mathcal{V}_l}
+		    \Bigl(
+					{\lambda_l^{(p)}}^\top (x_l^{(p)} - z_l) + \frac{\rho}{2}\|x_l^{(p)} - z_l\|^2
+				\Bigr)
+		\label{Eq:AugmLagr1}
+		\\
+		&=
+		  \sum_{p=1}^P f_p(x_{S_p}^{(p)}) + \sum_{p = 1}^P \sum_{l \in S_p}
+		    \Bigl(
+					{\lambda_l^{(p)}}^\top (x_l^{(p)} - z_l) + \frac{\rho}{2}\|x_l^{(p)} - z_l\|^2
+				\Bigr)\,,
+		\label{Eq:AugmLagr2}
+	\end{align}
+	where~$\lambda_l^{(p)}$ is the dual variable associated to the constraint~$x_l^{(p)} = z_l$ in~\eqref{Eq:PartialProb}. According to the $2$-block ADMM, we minimize~\eqref{Eq:AugmLagr2} first with respect to~$\bar{x}$ and then to~$z$. The first step decomposes into~$P$ problems that can be solved at each node in parallel. For the $p$th node, $x_{S_p}$ is updated as
+	\begin{align*}
+		  x_{S_p}^{(p),k+1}
+		&=
+		  \underset{x_{S_p}}{\arg\min} \,\,\, f_p(x_{S_p}) + \sum_{l\in S_p} \Bigl((\lambda_l^{(p),k})^\top (x_l^{(p)} - z_l^k) + \frac{\rho}{2}\|x_l^{(p)} - z_l^k\|^2\Bigr)
+		\\
+		&=
+		  \underset{x_{S_p}}{\arg\min} \,\,\, f_p(x_{S_p}) + \sum_{l\in S_p} (\lambda_l^{(p),k} - \rho z_l^k)^\top x_l^{(p)} + \frac{\rho}{2}\|x_{S_p}\|^2\,.
+	\end{align*}
+	After these updates, each component of~$z$ is updated as
+	\begin{align*}
+		  z_l^{k+1}
+		&=
+		  \underset{z_l}{\arg\min} \,\,\, \sum_{p \in \mathcal{V}_l} \Bigl( {\lambda_l^{(p)}}^\top (x_l^{(p)} - z_l) + \frac{\rho}{2}\|x_l^{(p)} - z_l\|^2 \Bigr)
+		\\
+		&=
+		  \underset{z_l}{\arg\min} \,\,\, \sum_{p \in \mathcal{V}_l} \Bigl( {\lambda_l^{(p),k}}^\top x_l^{(p),k+1} - {\lambda_l^{(p),k}}^\top z_l + \frac{\rho}{2}\|x_l^{(p),k+1}\|^2 - \rho z_l^\top x_l^{(p),k+1}  + \frac{\rho}{2}\|z_l\|^2\Bigr)\,,
+	\end{align*}
+	whose solution is given by equating its gradient to zero:
+	\begin{align}
+		  &\sum_{p \in \mathcal{V}_l}\Bigl(-\lambda_l^{(p),k} - \rho x_l^{(p),k+1} + \rho z_l^{k+1}\Bigr) = 0
+		\notag
+		\\
+		\Longleftrightarrow \quad &
+		  \rho |\mathcal{V}_l|z_l^{k+1} = \sum_{p \in \mathcal{V}_l}\Bigl(\lambda_l^{(p),k} + \rho x_l^{(p),k+1}\Bigr)
+		\notag
+		\\
+		\Longleftrightarrow \quad &
+		  z_l^{k+1} = \frac{\sum_{p \in \mathcal{V}_l}\bigl(\lambda_l^{(p),k} + \rho x_l^{(p),k+1}\bigr)}{\rho |\mathcal{V}_l|}
+		\notag
+		\\
+		\Longleftrightarrow \quad &
+		  z_l^{k+1} = \frac{\frac{1}{\rho}\sum_{p \in \mathcal{V}_l}\lambda_l^{(p),k} + \sum_{p \in \mathcal{V}_l} x_l^{(p),k+1}}{ |\mathcal{V}_l|}\,.
+		\label{Eq:UpdateZ_aux}
+	\end{align}
+	Finally, each dual variable~$\lambda_l^{(p)}$ is updated as
+	\begin{equation}\label{Eq:DualVarUpdate}
+		\lambda_l^{(p),k+1} = \lambda_l^{(p),k} + \rho \bigl(x_l^{(p),k+1} - z_l^{k+1}\bigr)\,.
+	\end{equation}
+	Actually, the expression for~$z$, \eqref{Eq:UpdateZ_aux} can be simplified if we notice that~\eqref{Eq:DualVarUpdate} implies
+	\begin{align*}
+		  \sum_{p \in \mathcal{V}_l} \lambda_l^{(p),k+1}
+		&=
+		  \sum_{p \in \mathcal{V}_l} \lambda_l^{(p),k} + \rho \bigl(\sum_{p \in \mathcal{V}_l} x_l^{(p),k+1} - \sum_{p \in \mathcal{V}_l} z_l^{k+1}\bigr)
+		\\
+		&=
+		  \sum_{p \in \mathcal{V}_l} \lambda_l^{(p),k} + \rho \sum_{p \in \mathcal{V}_l} x_l^{(p),k+1} - \rho |\mathcal{V}_l| z_l^{k+1}
+		\intertext{and using \eqref{Eq:UpdateZ_aux}}
+		&=
+		  \sum_{p \in \mathcal{V}_l} \lambda_l^{(p),k} + \rho \sum_{p \in \mathcal{V}_l} x_l^{(p),k+1} - \sum_{p \in \mathcal{V}_l} \lambda_l^{(p),k} - \rho \sum_{p \in \mathcal{V}_l} x_l^{(p),k+1}
+		\\
+		&=
+		  0\,.
+	\end{align*}
+	Hence, the update for each $z_l$ becomes the simple average over the copies spread out through~$\mathcal{V}_l$:
+	\begin{equation}\label{Eq:UpdateZ}
+		z_l^{k+1} = \frac{\sum_{p \in \mathcal{V}_l} x_l^{(p),k+1}}{ |\mathcal{V}_l|}\,.
+	\end{equation}
+	It is precisely this update that makes the algorithm efficient only in the scenario where every induced subgraph is a star. Otherwise, computing the average~\eqref{Eq:UpdateZ} would require a consensus algorithm, or other techniques that would result in an increase of the number of communications.
+
+	The resulting algorithm is in Algorithm~\ref{Alg:BoydADMM}. Note that after each~$k$ iteration there was information flowing both ways in each edge just once. Therefore, each iteration of the algorithm requires one communication step.
+
+	\begin{algorithm}
+			\caption{$2$-block ADMM~\cite{Boyd10-ADMM}}
+			\algrenewcommand\algorithmicrequire{\textbf{Initialization:}}
+			\label{Alg:BoydADMM}
+    \begin{algorithmic}[1]
+    \small
+    \Require set each $x_l^{(p),1}$, $z_l^1$, and $\lambda_l^{(p),1}$ with arbitrary values; choose~$\rho > 0$; set $k=1$
+    \Repeat
+      \ForAll{$p=1,\ldots,P$ [in parallel]}
+				\State Update all its copies $x_{S_p}^{(p)} := \{x_l^{(p)}\}_{l \in S_p}$ with
+					$$
+						x_{S_p}^{(p),k+1} = \underset{x_{S_p}}{\arg\min} \,\,\, f_p(x_{S_p}) + \sum_{l\in S_p} (\lambda_l^{(p),k} - \rho z_l^k)^\top x_l^{(p)} + \frac{\rho}{2}\|x_{S_p}\|^2
+					$$
+
+				\State Send $x_l^{(p),k+1}$ to all neighbors that depend on~$x_l$, i.e., $\mathcal{N}_p \cap \mathcal{V}_l$
+      \EndFor
+
+      \ForAll{$p$ such that $p$ is the center of the star~$\mathcal{V}_l$ [in parallel]}
+				\State Update $z_l$ as
+					$$
+						z_l^{k+1} = \frac{\sum_{p \in \mathcal{V}_l} x_l^{(p),k+1}}{ |\mathcal{V}_l|}
+					$$
+
+				\State Send~$z_l^{k+1}$ to all neighbors that depend on~$x_l$, i.e., $\mathcal{N}_p \cap \mathcal{V}_l$
+      \EndFor
+
+      \State $k \gets k+1$
+
+    \Until{some stopping criterion is met}
+    \end{algorithmic}
+  \end{algorithm}
+
+
+\pagebreak
+\bibliographystyle{amsplain}
+\bibliography{BoydADMM}
+
+\end{document}

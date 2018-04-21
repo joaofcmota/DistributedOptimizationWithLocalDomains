@@ -1,0 +1,151 @@
+\documentclass[letter,10pt]{article}
+
+\usepackage[english]{babel}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{color}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{epsfig}
+\usepackage{pstricks}
+\usepackage{pst-node}
+\usepackage{pst-grad}
+\usepackage{ifthen}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{setspace}
+\usepackage[framed]{ntheorem}
+\usepackage{framed}
+
+
+\setlength{\topmargin}{-10mm} \setlength{\textheight}{225mm}
+\setlength{\headheight}{14pt} \setlength{\headsep}{10mm}
+\setlength{\textwidth}{150mm} \setlength{\footskip}{13mm}
+\setlength{\oddsidemargin}{5mm} \setlength{\evensidemargin}{5mm}
+
+
+\theoremstyle{definition}
+\newtheorem{Algorithm}{Algorithm}
+\newtheorem*{Definition}{Definition}
+\shadecolor{black!10!white}
+\theorembodyfont{\rm\normalfont}
+\theoremindent0cm
+\newshadedtheorem{thm}{Theorem}
+
+\newshadedtheorem{lem}{Lemma}
+\newshadedtheorem{proposition}{Proposition}
+\newtheorem{Assumption}{Assumption}
+\newtheorem{Remark}{Remark}
+
+\theoremstyle{nonumberplain}
+\theoremindent0cm
+\newtheorem{proof}{Proof}
+
+
+\newcommand{\mypar}[1]{\bigskip\noindent {\bf #1.}}
+
+\newcommand\mynote[1]{\mbox{}\marginpar{\footnotesize\raggedright\hspace{0pt}\color{blue}\emph{#1}}}
+
+\newcommand{\answer}[1]{\medskip\noindent \textcolor[rgb]{0.00,0.00,1.00}{#1}\bigskip}
+
+\newcommand{\qed}{\hfill $\Box$}
+
+\definecolor{red}{RGB}{153,0,0}
+
+
+
+\begin{document}
+
+
+\section*{Gradient Methods on Network Flow Problems}
+
+	The network flow problem we consider is
+	\begin{equation}\label{Eq:NetFlow}
+		\begin{array}{cl}
+			\underset{x = \{x_{ij}\}_{(i,j) \in \mathcal{E}}}{\text{minimize}}   & \sum_{(i,j) \in \mathcal{E}}  \phi_{ij}(x_{ij}) \\
+			\text{subject to} & Bx = d \\
+			                  & 0 \leq x \leq c\,,
+		\end{array}
+	\end{equation}
+	which is associated to a digraph with~$P$ nodes and $E$ edges (the set of edges is~$\mathcal{E}$). That digraph is represented with its node-arc incidence matrix~$B \in \mathbb{R}^{P \times E}$ and each edge $(i,j)$ in the network has capacity~$c_{ij}$. $d$ is the vector of flow inputs/outputs, and~$\phi_{ij}$ is the cost associated to edge~$(i,j)$. We assume that $(i,j) \in \mathcal{E}$ means a connection (arrow) from~$i$ to~$j$. Also, the $ij$th column of the node-arc incidence matrix has a~$-1$ in the $i$th entry and a $1$ in the $j$th entry. Consider the dual of~\eqref{Eq:NetFlow}:
+	\begin{equation}\label{Eq:DualNetFlow}
+		\begin{array}{cl}
+			\underset{\lambda = (\lambda_1,\ldots,\lambda_P)}{\text{maximize}} & L(\lambda) \,,
+		\end{array}
+	\end{equation}
+	where the dual function is
+	\begin{align*}
+		  L(\lambda)
+		&=
+		  \inf_{0\leq x \leq c}\,\, \sum_{(i,j) \in \mathcal{E}} \phi_{ij}(x_{ij}) + \bigl(B^\top \lambda\bigr)^\top x - d^\top \lambda
+		\\
+		&=
+		  - d^\top \lambda + \sum_{(i,j) \in \mathcal{E}} \inf_{0 \leq x_{ij} \leq c_{ij}} \phi_{ij}(x_{ij}) + (\lambda_j - \lambda_i)x_{ij}
+		\\
+		&=
+		  -d^\top \lambda + \sum_{(i,j) \in \mathcal{E}} \phi_{ij}(x_{ij}(\lambda_j - \lambda_i)) + (\lambda_j - \lambda_i)x_{ij}(\lambda_j - \lambda_i)\,,
+	\end{align*}
+	where
+	\begin{equation}\label{Eq:xv}
+		x_{ij}(v) := \inf_{0\leq x_{ij} \leq c_{ij}} \, \phi_{ij}(x_{ij}) + v \,x_{ij}\,,
+	\end{equation}
+	which is always well-defined. We will choose
+	$$
+		\phi_{ij}(x_{ij}) = \frac{x_{ij}}{c_{ij} - x_{ij}}\,,
+	$$
+	which is continuously differentiable and strictly convex in $0\leq x_{ij} < c_{ij}$. To find~\eqref{Eq:xv} for this choice, take the derivative of the objective of~\eqref{Eq:xv} and equate it to zero:
+	\begin{align*}
+		&\frac{c_{ij}}{(c_{ij} - x_{ij})^2} + v = 0
+		\\
+		\Longleftrightarrow\quad
+		&
+		c_{ij} + v(c_{ij} - x_{ij})^2 = 0
+		\\
+		\Longleftrightarrow\quad
+		&
+		v x_{ij}^2 - 2 v c_{ij} x_{ij} + c_{ij} + v c_{ij}^2 = 0
+		\\
+		\Longleftrightarrow\quad
+		&
+		x_{ij}^2 - 2 c_{ij} x_{ij} +  \frac{c_{ij} + v c_{ij}^2}{v} = 0\,,
+	\end{align*}
+	whose solutions, if they exist, are
+	\begin{align*}
+		  x_{ij}
+		&=
+		  \frac{2c_{ij} \pm \sqrt{4c_{ij}^2 - 4c_{ij}^2 - 4c_{ij}/v}}{2}
+		\\
+		&=
+		  \frac{2c_{ij} \pm \sqrt{- 4c_{ij}/v}}{2}
+		\\
+		&=
+		  c_{ij} - \sqrt{-c_{ij}/v}\,,
+	\end{align*}
+	where we selected the solution with $-$ because we need $x_{ij} \leq c_{ij}$. This quadratic form has a solution only if~$v < 0$. In fact, it can be seen graphically that if~$v \geq 0$, $x_{ij}(v) = 0$. Therefore,
+	$$
+		x_{ij}(v) =
+		\left\{
+			\begin{array}{ll}
+				0 & v\geq 0 \\
+				\Bigl[c_{ij} - \sqrt{-c_{ij}/v}\Bigr]_{[0,c_{ij}]} & v<0\,,
+			\end{array}
+		\right.
+	$$
+	where~$[\cdot]_{[0,c_{ij}]}$ denotes the projection onto the set~$[0,c_{ij}]$.
+
+	The gradient of~$L(\lambda)$ is given by~$\nabla L(\lambda) = B x(\lambda) - d$, whose $p$th component is
+	$$
+		\frac{\partial}{\partial\, \lambda_p} L(\lambda) = -\sum_{j \in \mathcal{N}_p} x_{pj}(\lambda_j - \lambda_p) + \sum_{j \in \mathcal{N}_p} x_{jp}(\lambda_p - \lambda_j) - d_p\,.
+	$$
+	Therefore, $\lambda_p$ can be updated at node~$p$ through
+	$$
+		\lambda_p^{k+1} = \lambda_p^{k} + \alpha \Bigl(\sum_{j \in \mathcal{N}_p} x_{jp}(\lambda_p^k - \lambda_j^k)  -\sum_{j \in \mathcal{N}_p} x_{pj}(\lambda_j^k - \lambda_p^k) - d_p \Bigr)\,,
+	$$
+	where~$\alpha$ is the stepsize and the algorithm is the simple gradient method. The previous update is possible if both nodes $i$ and~$j$ know~$\phi_{ij}$ and all the nodes exchange their $\lambda^k$'s after updating them. Note that every computation involving $\phi_{ij}$ takes place at both nodes $i$ and~$j$. Note also that~$\nabla L(\lambda)$ is not Lipschitz continuous.
+
+
+\end{document}

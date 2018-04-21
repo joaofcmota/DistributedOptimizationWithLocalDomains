@@ -1,0 +1,16 @@
+--------------------------------------------------
+Network Statistics:
+
+
+
+Type:             Barabasi
+Parameter:        2
+Random seed:      1234
+Number of nodes:  6
+Number of edges:  8
+Diameter:         2
+Number of colors: 3
+Maximum degree:   4
+Minimum degree:   2
+Average degree:   2.66666666667
+--------------------------------------------------

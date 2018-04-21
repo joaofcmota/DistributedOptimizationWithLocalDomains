@@ -1,0 +1,141 @@
+\documentclass[letter,10pt]{article}
+%\documentclass[journal,twocolumn]{IEEEtran}
+%\documentclass[onecolumn,journal,draftcls,11pt]{IEEEtran}
+
+%\usepackage{spconf}
+\usepackage[english]{babel}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{color}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{colortbl}                   % Para tabelas com sombreados
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{epsfig}
+\usepackage{pstricks}
+\usepackage{pst-node}
+\usepackage{pst-grad}
+\usepackage{ifthen}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{setspace}
+\usepackage{pdflscape}
+\usepackage{multirow}
+\usepackage[framed]{ntheorem}
+\usepackage{framed}
+
+
+\setlength{\topmargin}{-10mm} \setlength{\textheight}{225mm}
+%\setlength{\topmargin}{0mm}
+\setlength{\headheight}{14pt} \setlength{\headsep}{10mm}
+\setlength{\textwidth}{150mm} \setlength{\footskip}{13mm}
+\setlength{\oddsidemargin}{5mm} \setlength{\evensidemargin}{5mm}
+
+%\usepackage{pst-plot}
+%\usepackage{psfrag}
+
+%\usepackage{hyperref}
+
+
+\theoremstyle{definition}
+\newtheorem{Algorithm}{Algorithm}
+\newtheorem*{Definition}{Definition}
+\shadecolor{black!10!white}
+\theorembodyfont{\rm\normalfont}
+\theoremindent0cm
+\newshadedtheorem{thm}{Theorem}
+
+\newshadedtheorem{lem}{Lemma}
+\newshadedtheorem{proposition}{Proposition}
+\newtheorem{Assumption}{Assumption}
+\newtheorem{Remark}{Remark}
+
+\theoremstyle{nonumberplain}
+\theoremindent0cm
+\newtheorem{proof}{Proof}
+
+%\theoremstyle{plain}
+%\newtheorem{Conjecture}{Conjecture}
+%\newtheorem{Lemma}{Lemma}
+%\newtheorem{Assumption}{Assumption}
+
+
+
+%\newcommand{\mypar}[1]{{\bf #1.}}
+
+\newcommand{\mypar}[1]{\bigskip\noindent {\bf #1.}}
+
+\newcommand\mynote[1]{\mbox{}\marginpar{\footnotesize\raggedright\hspace{0pt}\color{blue}\emph{#1}}}
+
+\newcommand{\answer}[1]{\medskip\noindent \textcolor[rgb]{0.00,0.00,1.00}{#1}\bigskip}
+
+\newcommand{\qed}{\hfill $\Box$}
+
+\definecolor{red}{RGB}{153,0,0}
+
+
+
+\begin{document}
+
+
+\section*{Description and Implementation of a Distributed Gradient Method for Distribution Optimization With a
+	Partial Variable With Induced Subgraphs
+}
+
+	This document describes the direct application of the gradient method to the problem
+	\begin{equation}\label{Eq:PartialProb}
+		\underset{x \in \mathbb{R}^n}{\text{minimize}} \,\,\, f_1(x_{S_1}) + f_2(x_{S_2}) + \cdots + f_P(x_{S_P})\,,
+	\end{equation}
+	where function~$f_p$ depends only on a subset~$S_p \subseteq \{1,\ldots,n\}$ of components of the variable~$x \in \mathbb{R}^n$. We will see, however, that this is efficient only in problems where each component~$x_l$ induces a star subgraph, for~$l=1,\ldots,n$. In other words, there is a connected network with~$P$ nodes, where the $p$th node knows only~$f_p$; in this network, the set of nodes that depends on~$x_l$ is a star.
+
+\mypar{Derivation}
+	Let~$\mathcal{G} = (\mathcal{V},\mathcal{E})$ be the communication network where we want to solve~\eqref{Eq:PartialProb} in a distributed way. Let~$\mathcal{V}_l$ be the subgraph induced by~$x_l$, i.e., the set of nodes in~$\mathcal{V}$ whose function~$f_p$ depends on~$x_l$ ($l \in S_p$). We assume~$\mathcal{V}_l$ is a star.
+
+	Denote the objective of~\eqref{Eq:PartialProb} by~$f(x)$. Its gradient w.r.t.\ $x_l$ is
+	$$
+		\frac{\partial}{\partial\, x_l}f(x)
+		=
+		\sum_{p \in \mathcal{V}_l}\frac{\partial}{\partial\, x_l} f_p(x_{S_p})\,.
+	$$
+	The gradient method assumes~$f(x)$ is convex, continuously differentiable, and its gradient~$\nabla f(x)$ is Lipschitz continuous with constant~$L$, i.e. $\|\nabla f(y) - \nabla f(x)\| \leq L\|y - x\|$, for any~$x,y$ in the domain of~$f$. Each component~$x_l$ is updated as
+	\begin{equation}\label{Eq:UpdateComp}
+		x_l^{k+1} = \Bigl[ x_l^k - \frac{1}{L} \sum_{p \in \mathcal{V}_l}\frac{\partial}{\partial\, x_l} f_p(x_{S_p}) \Bigr]^+_l\,,
+	\end{equation}
+	where~$[\cdot]^+_l$ is a projection operator for the component~$x_l$. This is imposed by the node that is the center of the star~$\mathcal{V}_l$, as explained next. In a distributed scenario, the update~\eqref{Eq:UpdateComp} has to take place at a given node. That node has to collect all the partial derivatives $\frac{\partial}{\partial\, x_l} f_p(x_{S_p})$, sum them, perform the update, and compute the projection. This is only efficient if the topology of~$\mathcal{V}_l$ is a star and these operations are all performed at the center of the star. This is illustrated in Algorithm~\ref{Alg:DistrGrad}.
+
+	\begin{algorithm}
+			\caption{Distributed Gradient Method}
+			\algrenewcommand\algorithmicrequire{\textbf{Initialization:}}
+			\label{Alg:DistrGrad}
+    \begin{algorithmic}[1]
+    \small
+    \Require Each node that is a center for~$x_l$, sets~$x_l^1$ to an arbitrary value and sends in to the neighbors that depend on~$x_l$; set $k=1$
+    \Repeat
+      \ForAll{$p=1,\ldots,P$ [in parallel]}
+				\State Compute $g_l^k :=\frac{\partial}{\partial\, x_l} f_l(x_l^k)$ for all~$l \in S_p$
+
+				\State Send $g_l^k$ to all neighbors that depend on~$x_l$, i.e., $\mathcal{N}_p \cap \mathcal{V}_l$
+      \EndFor
+
+      \ForAll{$p$ such that $p$ is the center of the star~$\mathcal{V}_l$ [in parallel]}
+				\State Update $x_l$ as
+					$$
+						x_l^{k+1} = \Bigl[ x_l^k - \frac{1}{L} \sum_{p \in \mathcal{V}_l}\frac{\partial}{\partial\, x_l} f_p(x_{S_p})\Bigr]^+_l
+					$$
+
+				\State Send~$x_l^{k+1}$ to all neighbors that depend on~$x_l$, i.e., $\mathcal{N}_p \cap \mathcal{V}_l$
+      \EndFor
+
+      \State $k \gets k+1$
+
+    \Until{some stopping criterion is met}
+    \end{algorithmic}
+  \end{algorithm}
+
+  In each $k$-iteration of Algorithm~\ref{Alg:DistrGrad}, there is information flowing in each edge, both ways just once. Thus, each iteration of the algorithm requires on communication step.
+
+
+\end{document}

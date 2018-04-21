@@ -1,0 +1,494 @@
+\documentclass[letter,10pt]{article}
+
+\usepackage[english]{babel}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{color}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{epsfig}
+\usepackage{pstricks}
+\usepackage{pst-node}
+\usepackage{pst-grad}
+\usepackage{ifthen}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{setspace}
+\usepackage[framed]{ntheorem}
+\usepackage{framed}
+
+
+\setlength{\topmargin}{-10mm} \setlength{\textheight}{225mm}
+\setlength{\headheight}{14pt} \setlength{\headsep}{10mm}
+\setlength{\textwidth}{150mm} \setlength{\footskip}{13mm}
+\setlength{\oddsidemargin}{5mm} \setlength{\evensidemargin}{5mm}
+
+
+\theoremstyle{definition}
+\newtheorem{Algorithm}{Algorithm}
+\newtheorem*{Definition}{Definition}
+\shadecolor{black!10!white}
+\theorembodyfont{\rm\normalfont}
+\theoremindent0cm
+\newshadedtheorem{thm}{Theorem}
+
+\newshadedtheorem{lem}{Lemma}
+\newshadedtheorem{proposition}{Proposition}
+\newtheorem{Assumption}{Assumption}
+\newtheorem{Remark}{Remark}
+
+\theoremstyle{nonumberplain}
+\theoremindent0cm
+\newtheorem{proof}{Proof}
+
+
+\newcommand{\mypar}[1]{\bigskip\noindent {\bf #1.}}
+
+\newcommand\mynote[1]{\mbox{}\marginpar{\footnotesize\raggedright\hspace{0pt}\color{blue}\emph{#1}}}
+
+\newcommand{\answer}[1]{\medskip\noindent \textcolor[rgb]{0.00,0.00,1.00}{#1}\bigskip}
+
+\newcommand{\qed}{\hfill $\Box$}
+
+\definecolor{red}{RGB}{153,0,0}
+
+
+
+\title{Network Flow as a Partial Variable Problem}
+
+\author{Jo\~ao Mota}
+
+
+\begin{document}
+
+\maketitle
+
+
+		The network flow problem is
+		\begin{equation}\label{Eq:20SetNetFlowProb}
+			\begin{array}{ll}
+				\text{minimize} & \sum_{(i,j) \in \mathcal{E}} \phi_{ij}(x_{ij}) \\
+				\text{subject to} & x \geq 0 \\
+				                  & Bx = d\,,
+			\end{array}
+		\end{equation}
+		where~$B$ is the node-arc incidence matrix and~$d$ is the external inflow/outflow vector. This problem can be written as a distributed optimization problem with a partial variable. Consider the network in Fig.~\ref{Fig:NetworkFlow}. The function at node~$6$ would be
+		$$
+			f_6(x_{16},x_{67},x_{46}) = \phi_{16}(x_{16}) + \phi_{46}(x_{46}) + \phi_{67}(x_{67}) + \textsf{i}_{\{x_{16} + x_{46} - x_{67} = d_6\}}(x_{16},x_{67},x_{46})\,.
+		$$
+		\begin{figure}[h]
+			\centering
+			\psscalebox{0.9}{
+			\begin{pspicture}(7,4.5)
+				\def\nodesimp{
+					\pscircle*[linecolor=black!65!white](0,0){0.3}
+				}
+				\rput(1,3.7){\rnode{N1}{\nodesimp}}
+				\rput(0.3,2.3){\rnode{N2}{\nodesimp}}
+				\rput(0.3,0.3){\rnode{N3}{\nodesimp}}
+				\rput(2.7,1.6){\rnode{N4}{\nodesimp}}
+				\rput(5,1.3){\rnode{N5}{\nodesimp}}
+				\rput(4.0,3.3){\rnode{N6}{\nodesimp}}
+				\rput(6.7,2.4){\rnode{N7}{\nodesimp}}
+
+				\rput(1,3.7){\small \textcolor{black!3!white}{$1$}}    %\rput[lb](1.282843,3.982843){$f_1$}
+				\rput(0.3,2.3){\small \textcolor{black!3!white}{$2$}}    %\rput[rb](0.017157,2.282843){$f_2$}
+				\rput(0.3,0.3){\small \textcolor{black!3!white}{$3$}}  %\rput[rt](0.017157,0.017157){$f_3$}
+				\rput(2.7,1.6){\small \textcolor{black!3!white}{$4$}}  %\rput[lt](2.782843,1.417157){$f_4$}
+				\rput(5,1.3){\small \textcolor{black!3!white}{$5$}}      %\rput[lt](5.282843,1.717157){$f_5$}
+				\rput(4.0,3.3){\small \textcolor{black!3!white}{$6$}}    %\rput[lb](4.082843,3.282843){$f_6$}
+				\rput(6.7,2.4){\small \textcolor{black!3!white}{$7$}}  %\rput[lb](6.982843,3.482843){$f_7$}
+
+				\ncline[nodesep=0.35cm,arrowsize=5pt,arrowinset=0.23]{->}{N1}{N2}\Bput{$\phi_{12}(x_{12})$}
+				\ncline[nodesep=0.35cm,arrowsize=5pt,arrowinset=0.23]{->}{N2}{N3}\Bput{$\phi_{23}(x_{23})$}
+				\ncline[nodesep=0.35cm,arrowsize=5pt,arrowinset=0.23]{->}{N2}{N4}\Aput{$\phi_{24}(x_{24})$}
+				\ncline[nodesep=0.35cm,arrowsize=5pt,arrowinset=0.23]{->}{N4}{N5}\Bput{$\phi_{45}(x_{45})$}
+				\ncline[nodesep=0.35cm,arrowsize=5pt,arrowinset=0.23]{->}{N4}{N6}\Bput{$\phi_{46}(x_{46})$}
+				%\ncline[nodesep=0.35cm]{-}{N5}{N6}\Bput{$\phi_{56}(x_{56})$}
+				\ncline[nodesep=0.35cm,arrowsize=5pt,arrowinset=0.23]{->}{N5}{N7}\Bput{$\phi_{57}(x_{57})$}
+				\ncline[nodesep=0.35cm,arrowsize=5pt,arrowinset=0.23]{<-}{N3}{N4}\Bput{$\phi_{34}(x_{34})$}
+				\ncline[nodesep=0.35cm,arrowsize=5pt,arrowinset=0.23]{->}{N1}{N6}\Aput{$\phi_{16}(x_{16})$}
+				\ncline[nodesep=0.35cm,arrowsize=5pt,arrowinset=0.23]{->}{N6}{N7}\Aput{$\phi_{67}(x_{67})$}
+
+				%\psgrid
+			\end{pspicture}
+			}
+			\caption{
+				Example of a network flow problem. Each edge has a variable and a function of that variable associated. The goal is to minimize the sum of all functions while satisfying the flow constraints.
+			}
+			\label{Fig:NetworkFlow}
+		\end{figure}
+		The problem this node has to solve at each iteration is
+		\begin{equation}\label{Eq:20SetNetFlowEachNode}
+			\begin{array}{ll}
+				\underset{(x_{16},x_{46},x_{67})}{\text{minimize}} & \phi_{16}(x_{16}) + \phi_{46}(x_{46}) + \phi_{67}(x_{67})
+							+
+							\begin{bmatrix}
+								v_1 & v_2 & v_3
+							\end{bmatrix}
+							\begin{bmatrix}
+								x_{16} \\
+								x_{46} \\
+								x_{67}
+							\end{bmatrix}
+							+
+							\begin{bmatrix}
+								x_{16} &
+								x_{46} &
+								x_{67}
+							\end{bmatrix}
+							\begin{bmatrix}
+								a_1 & & \\
+								& a_2 & \\
+								& & a_3
+							\end{bmatrix}
+							\begin{bmatrix}
+								x_{16} \\
+								x_{46} \\
+								x_{67}
+							\end{bmatrix}
+					\\
+			\text{subject to} & \begin{bmatrix}
+														1 & 1 & -1
+			                    \end{bmatrix}
+			                    \begin{bmatrix}
+														x_{16} \\
+														x_{46} \\
+														x_{67}
+													\end{bmatrix}
+													= d_6
+													\\
+													& x_{16}, x_{46}, x_{67} \geq 0\,.
+			\end{array}
+		\end{equation}
+
+		Consider the multicommodity flow problem~\cite[Ch.17]{Ahuja93:NetworkFlows}:
+		\begin{equation}\label{Eq:MultiComm}
+			\begin{array}{ll}
+				\underset{x = \{x^k\}_{k=1}^K}{\text{minimize}} & \sum_{k = 1}^K \sum_{(i,j) \in \mathcal{E}} \phi^k_{ij}(x_{ij}^k) \\
+				\text{subject to} & B x^k = d^k \,,\quad k = 1,\ldots,K \\
+				                  & 0 \leq \sum_{k=1}^K x_{ij}^k \leq c_{ij}\,, \quad k = 1,\ldots,K, \, (i,j) \in \mathcal{E}\,,
+			\end{array}
+		\end{equation}
+		where~$x_{ij}^k$ is the flow of commodity~$k$ on edge~$(i,j)$ and $x^k = \{x_{ij}^k\}_{(i,j) \in \mathcal{E}}$, the variable of~\eqref{Eq:MultiComm}, is the collection of flows of commodity~$k$ along all the network edges. Also, $d^k$ is the vector of input for commodity~$k$. We can address this problem by considering the flows aggregated across commodities, i.e., the network does not distinguish between different commodities. To do so, define~$\phi_{ij} = \sum_{k = 1}^K \phi_{ij}^k$, $x_{ij} = \sum_{k=1}^K x_{ij}^k$, and $d  = \sum_{k=1}^K d^k$. Now, simplify~\eqref{Eq:MultiComm} to
+		\begin{equation}\label{Eq:MultiComm2}
+			\begin{array}{cl}
+				\underset{x = \{x_{ij}\}_{(i,j) \in \mathcal{E}}}{\text{minimize}} & \sum_{(i,j) \in \mathcal{E}} \phi_{ij}(x_{ij}) \\
+				\text{subject to} & B x = d \\
+				                  & 0 \leq x_{ij} \leq c_{ij}\,, \quad (i,j) \in \mathcal{E}\,,
+			\end{array}
+		\end{equation}
+		which is the same as~\eqref{Eq:20SetNetFlowProb}, plus the additional constraints $x_{ij} \leq c_{ij}$. We model this problem as a congestion control problem by using
+		$$
+			\phi_{ij}(x_{ij}) = \frac{x_{ij}}{c_{ij} - x_{ij}}\,,
+		$$
+		where~$c_{ij}$ is the capacity of the (directed) edge $(i,j) \in \mathcal{E}$, as a model for the delay at edge~$(i,j)$ as a function of the aggregate rate of commodities at that edge, $x_{ij}$. This function is convex for $0 \leq x \leq c$:
+		\begin{align*}
+			\dot{\phi}_{ij}(x_{ij}) &= \frac{c_{ij} - x_{ij} + x_{ij}}{(c_{ij} - x_{ij})^2} = \frac{c_{ij}}{(c_{ij} - x_{ij})^2}
+			\\
+			\ddot{\phi}_{ij}(x_{ij}) &= 2\frac{c_{ij}}{(c_{ij} - x_{ij})^3}\,,
+		\end{align*}
+		which is positive for~$0 \leq x_{ij} \leq c_{ij}$. With this function, problem~\eqref{Eq:20SetNetFlowEachNode}, for a generic node~$p$, becomes
+		\begin{equation}\label{Eq:20SetNetFlowEachNode2}
+			\begin{array}{cl}
+				\underset{x= (x_1,\ldots,x_{n_p})}{\text{minimize}} & \sum_{i=1}^{n_p} (\frac{x_i}{c_i - x_i} + v_i x_i + a_i x_i^2)
+				\\
+				\text{subject to} & b_p^\top x = d_p \\
+				                  & 0 \leq x \leq c\,.
+			\end{array}
+		\end{equation}
+		Since the projection onto the set~$S:=\{b_p^\top x = d_p\,,\, 0\leq x\leq c\}$ is relatively simple, we will use the Barzilai-Borwein method, which requires the computation of the function and gradient of the objective~\eqref{Eq:20SetNetFlowEachNode2} at each point and also a function that projects an arbitrary point~$y$ onto~$S$.
+
+		\mypar{Projection onto~\boldmath{$S$}} Let~$y \in \mathbb{R}^{q}$ be given. The projection of~$y$ onto~$S$ is
+		\begin{equation}\label{Eq:20SetNetFlowProjection}
+			\text{P}(y) := \begin{array}[t]{cl}
+			        	\underset{x}{\arg\min} & \frac{1}{2}\|x - y\|^2 \\
+			        	\text{s.t.} & b^\top x = d \\
+			        	            & x \geq 0 \\
+			        	            & x \leq c\,.
+			        \end{array}
+		\end{equation}
+		Associating the Lagrange multipliers~$\lambda$, $\mu$, and~$\eta$ to the constraints of~\eqref{Eq:20SetNetFlowProjection}, respectively, the KKT equations are
+		\begin{equation}\label{Eq:20SetKKT}
+			\left\{
+				\begin{array}{l}
+					x - y + \lambda b - \mu + \eta= 0 \\
+					0 \leq x \leq c \\
+					b^\top x = d \\
+					\mu \geq 0 \\
+					\eta \geq 0 \\
+					x^\top \mu = 0 \\
+					(x-c)^\top \eta = 0
+				\end{array}
+			\right.
+			\qquad
+			\Longleftrightarrow
+ 			\qquad
+ 			\left\{
+				\begin{array}{l}
+					y - \lambda b = x + \eta - \mu \\
+					0 \leq x \leq c \\
+					\mu \geq 0 \\
+					\eta \geq 0 \\
+					x^\top \mu = 0 \\
+					(x-c)^\top \eta = 0 \\
+					b^\top x = d \\
+				\end{array}
+ 			\right.
+ 			\,.
+		\end{equation}
+		We will now see that all the equations, but the last, imply that $x = \text{P}_{[0,c]}(y - \lambda b)$ and~$\eta - \mu = \text{P}_{\mathbb{R}\backslash [0,c]}(y - \lambda b)$, where~$\text{P}_{[0,c]}(z)$ is the projection of~$z$ onto~$[0,c]$, i.e., the $i$th component of~$z$ is given by:
+		$$
+			\left\{
+				\begin{array}{ll}
+					c_i &,\, z_i\geq c_i \\
+					0 &,\, z_i\leq 0 \\
+					z_i &,\, \text{otherwise}
+				\end{array}
+			\right.
+			\,.
+		$$
+		To see that, we have to check that
+		$$
+			(y - \lambda b - \text{P}_{[0,c]}(y - \lambda b))^\top (s - \text{P}_{[0,c]}(y - \lambda b)) \leq 0
+			\quad
+			\Longleftrightarrow
+			\quad
+			(y - \lambda b - x)^\top (s - x) \leq 0
+			\,,
+		$$
+		for any~$s \in [0,c]$. In fact, the first equation of~\eqref{Eq:20SetKKT} tells us that $y - \lambda b - x = \eta - \mu$. Thus,
+		\begin{align*}
+			  (\eta-\mu)^\top (s - x)
+			&=
+			  (\eta-\mu)^\top s - \underbrace{\eta^\top x}_{=c^\top \eta} + \underbrace{\mu^\top x}_{=0}
+			\\
+			&=
+			  (\eta-\mu)^\top s - c^\top \eta
+			\\
+			&=
+			  \eta^\top s - \underbrace{\mu^\top s}_{\geq 0} - c^\top \eta
+			\\
+			&\leq
+				\underbrace{\eta^\top}_{\geq 0} \underbrace{(s-c)}_{\leq 0}
+			\\
+			&\leq 0\,.
+		\end{align*}
+		This shows that~$x = \text{P}_{[0,c]}(y - \lambda b)$ in~\eqref{Eq:20SetKKT}. Therefore, that system of equations can be written as
+		$$
+			\left\{
+			\begin{array}{l}
+				x = \text{P}_{[0,c]}(y - \lambda b) \\
+				b^\top x = d \\
+				\eta - \mu = \text{P}_{\mathbb{R}\backslash[0,c]}(y - \lambda b)
+				\\
+				\mu \geq 0 \\
+				\eta \geq 0 \\
+				x^\top \mu = 0 \\
+				(x-c)^\top \eta = 0
+			\end{array}
+			\right.
+			\,.
+		$$
+	  Since we are only interested in finding~$x$, we just need the first two equations.
+
+		We will now focus on finding~$\lambda$. For that, replace~$x$ into~$b^\top x = d$:
+		$$
+			g(\lambda) := b_1\text{P}_{[0,c_1]}(y_1 - \lambda b_1) + b_2\text{P}_{[0,c_2]}(y_2 - \lambda b_2)
+			+ \cdots + b_q\text{P}_{[0,c_q]}(y_q - \lambda b_q) = d\,.
+		$$
+		First, note that each~$b_i$ is either~$+1$ or~$-1$.
+		\begin{itemize}
+			\item If~$b_i=1$, we have
+					$$
+						b_i\text{P}_{[0,c_i]}(y_i - \lambda b_i) =
+						\left\{
+							\begin{array}{ll}
+								c_i &,\,\, \lambda \leq y_i - c_i \\
+								y_i - \lambda &,\,\, y_i - c_i \leq \lambda \leq y_i \\
+								0 &,\,\, \lambda \geq y_i
+							\end{array}
+						\right.
+						\,.
+					$$
+			\item If~$b_i = -1$, we have
+				  $$
+						b_i\text{P}_{[0,c_i]}(y_i - \lambda b_i) =
+						\left\{
+							\begin{array}{ll}
+								0 &,\,\, \lambda \leq -y_i \\
+								-y_i - \lambda &,\,\, -y_i \leq \lambda \leq c_i -y_i  \\
+								-c_i &,\,\, \lambda \geq c_i -y_i
+							\end{array}
+						\right.
+						\,.
+					$$
+		\end{itemize}
+		Note that the range of~$g$ is bounded. 	To find~$\lambda$ such that~$g(\lambda) = d$, note that~$g$ is a decreasing, piecewise-linear function. The points where it changes slope are, for all~$i = 1, \ldots,q$,
+		\begin{itemize}
+			\item $y_i$ and~$y_i-c_i$ if~$b_i = 1$;
+			\item $-y_i$ and~$c_i-y_i$ if~$b_i=-1$.
+		\end{itemize}
+	  Let~$z$ denote the above points after sorting,
+	  $$
+			z_1 \leq z_2 \leq \cdots \leq z_{2q}\,,
+	  $$
+	  and compute~$g$ for all the above points. Since~$g$ is decreasing,
+		$$
+			g(z_1) \geq g(z_2) \geq \cdots \geq g(z_{2q})\,.
+		$$
+		If~$d > g(z_1)$ or~$g(z_{2q}) > d$, the problem~\eqref{Eq:20SetNetFlowProjection} is not feasible. When feasible, we can find~$l$ such that~$g(z_l) \geq d \geq g(z_{l+1})$. Since~$g$ is piecewise linear,
+		we can find~$\lambda$ such that~$g(\lambda) = d$ by interpolation:
+		$$
+			\lambda = z_l + \frac{(z_{l+1} - z_l)(d - g(z_l))}{g(z_{l+1}) - g(z_l)}\,.
+		$$
+		After finding~$\lambda$ as above, the solution to~\eqref{Eq:20SetNetFlowProjection} can be easily computed as
+		$$
+			\text{P}(y) = \text{P}_{[0,c]}(y - \lambda b)\,.
+		$$
+
+
+% \subsection*{Experimental results}
+% 		I ran the algorithm for the partial variable for the network flow problem.
+%
+% 		\mypar{Trouble that was overcome} At first, I used the error
+% 		$$
+% 			\text{error} = \frac{1}{P}\sum_{p=1}^P \frac{\|x_{S_p} - x_{S_p}^\star\|}{\|x_{S_p}^\star\|}\,.
+% 		$$
+% 		However, this showed a very unstable performance of the algorithm. Later, I found out the cause: for many problems, $\|x_{S_p}^\star\| = 0$, although $x^\star \neq 0$. So, I changed the error to
+% 		$$
+% 			\text{error} = \frac{\sqrt{ \sum_{p=1}^P \frac{1}{|S_p|}\|x_{S_p} - x_{S_p}^\star\|^2}}{ \|x^\star\|^2 }\,.
+% 		$$
+% 		In the experiments, by relative error I mean the previous expression.
+%
+% 		\mypar{Experimental setup}
+%
+% 		\begin{itemize}
+% 			\item Networks with 50 nodes (see features below).
+%
+% 			\item Given one (undirected) network, we generate a factor graph for this specific problem as follows. We assign a random direction to all edges of the network, independently (i.i.d. Bernoulli). Some nodes will have only inflows and other nodes will only have outflows. These nodes are special because they need external sources of flow, i.e., a non-zero $b_p$. For these nodes, we generate~$b_p$ uniformly in $[-1,0]$ or~$[0,1]$, according to the need of the node. If the number of these nodes is greater than $30\%$ (over all the nodes), we set the remaining entries of~$b$ to zero, that is, no additional external flow is injected/extracted from the network. If the number is less than $30\%$, we put external inflows/outflows in a subset of the other nodes so that the percentage of nodes with external flows (sources or sinks) is $30\%$. In the end, we solve a quadratic program to make~$1^\top b = 0$.
+%
+% 			\item Solution was computed with CVX. NOTE: the way I generated the problem data sometimes yields infeasible problems. So, careful must be taken. CVX provides a nice way to assess if a problem is feasible or not.
+%
+% 			\item For all the experiments, $\rho = 10$, $\text{MAX$\_$ITER} = 200$, and the algorithms stop when the relative error is less than $10^{-4}$.
+% 		\end{itemize}
+%
+% 		\mypar{Results}
+%
+% 		\noindent
+% 		Network~$1$ (Erdos-Renyi $0.1161$, $5$ colors):
+% 		\begin{verbatim}
+% Relative error = 2.837411E-05
+% Number of iterations = 38
+% stop_crit = EPS REACHED
+% iter_for_errors =
+% 1.000000E-01    5
+% 1.000000E-02    15
+% 1.000000E-03    26
+% 1.000000E-04    38
+% 1.000000E-05    Inf
+% 1.000000E-06    Inf
+% 1.000000E-07    Inf
+% 1.000000E-08    Inf
+% 1.000000E-09    Inf
+% 1.000000E-10    Inf
+% 		\end{verbatim}
+%
+% 		\noindent
+% 		Network~$2$ (Watts-Strogatz $(4,0.4)$, $4$ colors):
+% 		\begin{verbatim}
+% Relative error = 3.511560E-05
+% Number of iterations = 40
+% stop_crit = EPS REACHED
+% iter_for_errors =
+% 1.000000E-01    4
+% 1.000000E-02    16
+% 1.000000E-03    28
+% 1.000000E-04    40
+% 1.000000E-05    Inf
+% 1.000000E-06    Inf
+% 1.000000E-07    Inf
+% 1.000000E-08    Inf
+% 1.000000E-09    Inf
+% 1.000000E-10    Inf
+% 		\end{verbatim}
+%
+% 		\noindent
+% 		Network~$3$ (Barabasi, $3$ colors):
+% 		\begin{verbatim}
+% Relative error = 2.888096E-05
+% Number of iterations = 32
+% stop_crit = EPS REACHED
+% iter_for_errors =
+% 1.000000E-01    4
+% 1.000000E-02    11
+% 1.000000E-03    23
+% 1.000000E-04    32
+% 1.000000E-05    Inf
+% 1.000000E-06    Inf
+% 1.000000E-07    Inf
+% 1.000000E-08    Inf
+% 1.000000E-09    Inf
+% 1.000000E-10    Inf
+% 		\end{verbatim}
+%
+% 		\noindent
+% 		Network~$4$ (Geometric $0.2797$, $10$ colors):
+% 		\begin{verbatim}
+% Relative error = 6.077721E-05
+% Number of iterations = 40
+% stop_crit = EPS REACHED
+% iter_for_errors =
+% 1.000000E-01    4
+% 1.000000E-02    14
+% 1.000000E-03    25
+% 1.000000E-04    40
+% 1.000000E-05    Inf
+% 1.000000E-06    Inf
+% 1.000000E-07    Inf
+% 1.000000E-08    Inf
+% 1.000000E-09    Inf
+% 1.000000E-10    Inf
+% 		\end{verbatim}
+%
+% 		\noindent
+% 		Network~$5$ (Lattice $5\times 10$, $2$ colors):
+% 		\begin{verbatim}
+% Relative error = 3.972053E-05
+% Number of iterations = 51
+% stop_crit = EPS REACHED
+% iter_for_errors =
+% 1.000000E-01    10
+% 1.000000E-02    24
+% 1.000000E-03    38
+% 1.000000E-04    51
+% 1.000000E-05    Inf
+% 1.000000E-06    Inf
+% 1.000000E-07    Inf
+% 1.000000E-08    Inf
+% 1.000000E-09    Inf
+% 1.000000E-10    Inf
+% 		\end{verbatim}
+%
+%
+% 	\mypar{To complete this example}
+%
+% 	\begin{itemize}
+% 		\item Implement other algorithms (Jadbabaie, Ribeiro, \ldots) and compare them with this one.
+%
+% 		\item Try the following method for generating data. Given an undirected network, choose two random nodes: a source and a sink. Determine if the flow problem is feasible. Remove the used edges from the network. If the network is connected, repeat. In the end, we will have a feasible problem and a sparse~$b$.
+%
+% 		\item Consider the following alternative error. Let~$\hat{x}$ denote the worst components, i.e., $\hat{x}_l := \max\{x_{l}^{(p)}\,:\, \|x_{l}^{(p)} - x_l^\star\| \geq \|x_{l}^{(j)} - x_l^\star\|\,,\, \text{for all~$j \in \mathcal{V}_l$}\}$, $l=1,\ldots,n$.
+% 	\end{itemize}
+%
+
+
+\pagebreak
+\bibliographystyle{amsplain}
+\bibliography{NetworkFlow}
+
+\end{document}
