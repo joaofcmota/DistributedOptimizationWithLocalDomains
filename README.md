@@ -20,7 +20,7 @@ simulate distributed algorithms.
 * `DADMM_Partial.m`:
 	solves the optimization problem
 
-	<p align="center"><img src="svgs/6ec3283e6e3265a8f069c5185acc3866.svg" align=middle width=488.24269395000005pt height=23.866193999999997pt/></p>
+	<p align="center"><img src="svgs/8c929ed4f1683c97667250dcfd5e3a5a.svg" align=middle width=512.7209339999999pt height=23.866193999999997pt/></p>
 
 	where the optimization variable has <img src="svgs/55a049b8f161ae7cfeb0197d75aff967.svg" align=middle width=9.86687624999999pt height=14.15524440000002pt/> components <img src="svgs/b7dec1314efeadd1815bf346b3472200.svg" align=middle width=131.5961955pt height=24.65753399999998pt/>, and
 	each set <img src="svgs/2da32a437e1e022c68095bcb359d92a2.svg" align=middle width=16.85640329999999pt height=22.465723500000017pt/> indexes the components of <img src="svgs/332cc365a4987aacce0ead01b8bdcc0b.svg" align=middle width=9.39498779999999pt height=14.15524440000002pt/> that node <img src="svgs/2ec6e630f199f589a2402fdf3e0289d5.svg" align=middle width=8.270567249999992pt height=14.15524440000002pt/> depends on. See the 

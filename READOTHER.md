@@ -21,7 +21,7 @@ simulate distributed algorithms.
 	solves the optimization problem
 
 	\begin{equation}\label{Eq:SeparableOptim}
-		\underset{x \in \mathbb{R}^n}{\text{minimize}} \,\,\, f_1(x) + f_2(x) + \cdots + f_P(x)\,,
+		\underset{x \in \mathbb{R}^n}{\text{minimize}} \,\,\, f_1(x_{S_1}) + f_2(x_{S_2}) + \cdots + f_P(x_{S_P})\,,
 	\end{equation}
 
 	where the optimization variable has $n$ components $x = (x_1, x_2, ..., x_n)$, and
@@ -64,8 +64,8 @@ simulate distributed algorithms.
   [link](https://www.nowpublishers.com/article/Details/MAL-016),
   [authors' version](https://web.stanford.edu/~boyd/papers/pdf/admm_distr_stats.pdf)
 
-  [Introductory Lectures on Convex Optimization: A Basic Course](
-  https://doi.org/10.1007/978-1-4419-8853-9).  
+  **[Introductory Lectures on Convex Optimization: A Basic Course](
+  https://doi.org/10.1007/978-1-4419-8853-9)**.  
   Y. Nesterov.  
   Springer Science+Business Media New York, 2004.  
   [link](https://doi.org/10.1007/978-1-4419-8853-9), 
