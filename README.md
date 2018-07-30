@@ -62,8 +62,8 @@ simulate distributed algorithms.
   [link](https://www.nowpublishers.com/article/Details/MAL-016),
   [authors' version](https://web.stanford.edu/~boyd/papers/pdf/admm_distr_stats.pdf)
 
-  [Introductory Lectures on Convex Optimization: A Basic Course](
-  https://doi.org/10.1007/978-1-4419-8853-9).  
+  **[Introductory Lectures on Convex Optimization: A Basic Course](
+  https://doi.org/10.1007/978-1-4419-8853-9)**.  
   Y. Nesterov.  
   Springer Science+Business Media New York, 2004.  
   [link](https://doi.org/10.1007/978-1-4419-8853-9), 
